@@ -6,11 +6,11 @@ from sklearn.preprocessing import OrdinalEncoder
 
 ## אבחנה-Ivi -Lymphovascular invasion
 def lymph_invasion(df):
-    df["אבחנה-Ivi -Lymphovascular invasion"].replace({
-        "nan": "0", "none": "0", "+": "1", "extensive": "1", "-": "0",
-        "No": "0", "(-)": "0", "NO": "0", "(+)": "1", "neg": "0",
-        "not": "0", "pos": "0", "yes": "1", "no": "0", None: "0",
-        "MICROPAPILLARY VARIANT": 2}, inplace=True)
+    df["אבחנה-Ivi -Lymphovascular invasion"] = df["אבחנה-Ivi -Lymphovascular invasion"].map({
+        "nan": 0, "none": 0, "+": 1, "extensive": 1, "-": 0,
+        '': 0 , "No":0, "(-)": 0, "NO": 0, "(+)": 1, "neg": 0,
+        "not": 0, "pos": 0, "yes": 1, "no": 0, None: 0,
+        "MICROPAPILLARY VARIANT": 2})
     return df
 
 

@@ -8,11 +8,16 @@ class Loader:
         self.df: pd.DataFrame = None
 
     def load(self):
-        self.df = pd.read_csv(self.path, parse_dates=True)
+        self.df = pd.read_csv(self.path, parse_dates=True,converters={
+            'אבחנה-Ivi -Lymphovascular invasion':lambda x:str(x) if str(x)
+                        != '' else "none"},  dtype={
+       'אבחנה-Ivi -Lymphovascular invasion':str })
 
     def activate_preprocessing(self, pre_processing_functions):
         for fun in pre_processing_functions:
+            print(f"function name:{fun} size before:{self.df.shape[0]}")
             self.df = fun(self.df)
+            print(f"function name:{fun} size after:{self.df.shape[0]}")
 
     def pickle_data(self):
         if self.df is not None:

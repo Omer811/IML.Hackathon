@@ -12,18 +12,20 @@ class BaselineEstimator(BaseEstimator):
         self.n_classes=len(class_name)
         self.classes=class_name
 
-    def _fit(self, X: pd.DataFrame, y: pd.Series):
+    def _fit(self, X: pd.DataFrame, y: np.ndarray):
         self.u_estimator = OneVsRestClassifier(SVC(),
-                                               n_jobs=self.n_jobs)
-        self.u_estimator.fit(
-            X.to_numpy(), y.to_numpy())
+                                               n_jobs=self.n_jobs,
+                                              verbose=49)
+        # self.u_estimator = SVC()
+        self.u_estimator.fit(X.to_numpy(), y)
 
     def _predict(self, X: pd.DataFrame):
         probs = self.u_estimator.predict(X.to_numpy())
-        return pd.Series(np.argsort(probs, axis=1)[:,:3])
+        return probs
 
 
+#pooled clustered ordinaly leaast squered
 
-    def _loss(self, X: pd.DataFrame, y: pd.Series):
+    def _loss(self, X: pd.DataFrame, y: np.ndarray):
         y_pred = self.predict(X)
-        return np.mean(y.to_numpy()-y_pred.to_numpy(),axis=1)
+        return np.mean(y-y_pred,axis=1)

@@ -57,6 +57,7 @@ def preprocessing_by_maya(df):
         df['אבחנה-Lymphatic penetration'] = np.where(df['אבחנה-Lymphatic penetration'].astype(str) == key,
                                      val, df['אבחנה-Lymphatic penetration'])
 
+
     # I turned Null into not yet established, and created dummy variables
     df['אבחנה-M -metastases mark (TNM)'].fillna('Not yet Established',
                                                 inplace=True)
@@ -109,6 +110,7 @@ def preprocessing_by_maya(df):
     # turning diagnosis dates into time stamps
     df['אבחנה-Diagnosis date'] = pd.to_datetime(df['אבחנה-Diagnosis date'],
                                                 errors='coerce')
+    del df['אבחנה-Diagnosis date']
     return df
 
 # loader = Loader(

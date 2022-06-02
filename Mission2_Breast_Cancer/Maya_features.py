@@ -40,8 +40,6 @@ def preprocessing_by_maya(df):
     df = pd.concat([df, pd.get_dummies(df[" Form Name"])], axis=1)
     del df[' Form Name']
 
-
-
     # Here we should consider to seperate LI into a seperate column, beacause it is not necasseriley lower than L1 and L2.
 
     # df['אבחנה-Lymphatic penetration'].replace(

@@ -41,7 +41,7 @@ def ki67(df):
 
 ## 'אבחנה-Her2'
 def her2(df):
-    POSITIVE_REGEX = r"(pos|Pos|POS|po|\+|[0-9]+.*[0-9]*\%*|jhuch|חיובי|strong|Strong|STRONG|high|High|HIGH|beg)"
+    POSITIVE_REGEX = r"(pos|Pos|POS|po|\+|[0-9]+.*[0-9]*\%*|jhuch|חיובי|strong|Strong|STRONG|high|High|HIGH|beg|3)"
     NEGATIVE_REGEX = r"(neg|ned|Neg|NEG|ned|nge|akhah|\-|שלילי)"
 
     def parse_pos_neg_col(df, col_name):

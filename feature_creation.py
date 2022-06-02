@@ -20,17 +20,17 @@ def create_times(df):
                                                 errors='coerce')
 
 
-    # time between 2 surgeries
-    df['time_between_1_2_surgery'] = df["אבחנה-Surgery date2"] - df[
-        "אבחנה-Surgery date1"]
-    df['time_between_1_2_surgery'] = df[
-                                         'time_between_1_2_surgery'] / np.timedelta64(
-        1, 'D')
-    df.loc[df['אבחנה-Surgery sum'] < 2, 'time_between_1_2_surgery'] = 0
-    df['time_between_1_2_surgery'] = np.where(
-        df['time_between_1_2_surgery'].astype(str) == 'nan', 0,
-        df['time_between_1_2_surgery'])
-    df['time_between_1_2_surgery'] = abs(df['time_between_1_2_surgery'])
+    # # time between 2 surgeries
+    # df['time_between_1_2_surgery'] = df["אבחנה-Surgery date2"] - df[
+    #     "אבחנה-Surgery date1"]
+    # df['time_between_1_2_surgery'] = df[
+    #                                      'time_between_1_2_surgery'] / np.timedelta64(
+    #     1, 'D')
+    # df.loc[df['אבחנה-Surgery sum'] < 2, 'time_between_1_2_surgery'] = 0
+    # df['time_between_1_2_surgery'] = np.where(
+    #     df['time_between_1_2_surgery'].astype(str) == 'nan', 0,
+    #     df['time_between_1_2_surgery'])
+    # df['time_between_1_2_surgery'] = abs(df['time_between_1_2_surgery'])
 
     # time first surgery and diagnosis
     df['time_from_first_surgery'] = df['אבחנה-Diagnosis date'] - df[

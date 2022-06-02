@@ -28,9 +28,8 @@ def load_parse_file(file):
 
 # Parse column and normalize pos\neg values -> Positive,Negative,Unknown
 def parse_pos_neg_col(df, col_name):
-    df[col_name] = np.where(df[col_name].str.contains(POSITIVE_REGEX), "Positive", df[col_name])
-    df[col_name] = np.where(df[col_name].str.contains(NEGATIVE_REGEX), "Negative", "Unknown")
-
+    df[col_name] = np.where(df[col_name].str.contains(POSITIVE_REGEX), "Positive", "Negative")
+    # df[col_name] = np.where(df[col_name].str.contains(NEGATIVE_REGEX), "Negative", df[col_name])
 
 # Map each column according to dict values
 def map_col(col, file):
@@ -50,7 +49,7 @@ def clean_cols(df):
     # Replace weird input values with pre-tagged values
     parse_pos_neg_col(df, "אבחנה-er")
     parse_pos_neg_col(df, "אבחנה-pr")
-    df["TNM"] = map_col(df["אבחנה-T -Tumor mark (TNM)"], TNM_MAP)
+    df["אבחנה-T -Tumor mark (TNM)"] = map_col(df["אבחנה-T -Tumor mark (TNM)"], TNM_MAP)
 
     # Replace null surgery values with "other"
     df["surgery before or after-Actual activity"].fillna(OTHER, inplace=True)  # 10 values
@@ -60,9 +59,10 @@ def clean_cols(df):
 
     # Transform surgery dates values to datetime format, there are null values
     df["אבחנה-Surgery date1"] = pd.to_datetime(df["אבחנה-Surgery date1"], errors='coerce')
-    df["אבחנה-Surgery date2"] = pd.to_datetime(df["אבחנה-Surgery date1"], errors='coerce')
-    df["אבחנה-Surgery date3"] = pd.to_datetime(df["אבחנה-Surgery date1"], errors='coerce')
-    df["surgery before or after-Activity date"] = pd.to_datetime(df["אבחנה-Surgery date1"], errors='coerce')
+    df["אבחנה-Surgery date2"] = pd.to_datetime(df["אבחנה-Surgery date2"], errors='coerce')
+    df["אבחנה-Surgery date3"] = pd.to_datetime(df["אבחנה-Surgery date3"], errors='coerce')
+    df["surgery before or after-Activity date"] = pd.to_datetime(df["surgery before or after-Activity date"],
+                                                                 errors='coerce')
 
     # Drop id column
     df.drop(["id-hushed_internalpatientid"], axis=1, inplace=True)

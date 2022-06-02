@@ -14,6 +14,9 @@ NEGATIVE_REGEX = r"(neg|ned|Neg|NEG|ned|nge|akhah|\-|שלילי)"
 def def_value():
     return "Undefined"
 
+#Default value
+def def_value_zero():
+    return 0
 
 # Get file in format {input}:{tag}, return dictionary
 def load_parse_file(file):
@@ -50,6 +53,12 @@ def clean_cols(df):
     parse_pos_neg_col(df, "אבחנה-er")
     parse_pos_neg_col(df, "אבחנה-pr")
     df["אבחנה-T -Tumor mark (TNM)"] = map_col(df["אבחנה-T -Tumor mark (TNM)"], TNM_MAP)
+
+    # Add feture Tumor-Size
+    df["tumor_size"] = df["אבחנה-T -Tumor mark (TNM)"]
+    t_map = defaultdict(def_value_zero)
+    t_map["T1"], t_map["T2"], t_map["T3"], t_map["T4"] = 1, 2, 3, 4
+    df["tumor_size"] = df["tumor_size"].map(t_map)
 
     # Replace null surgery values with "other"
     df["surgery before or after-Actual activity"].fillna(OTHER, inplace=True)  # 10 values

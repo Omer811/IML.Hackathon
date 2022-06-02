@@ -60,10 +60,18 @@ def transform_categorical(data:pd.DataFrame):
     return data
 def split_train_test_dev(X,y):
 
-    X_temp,X_test, y_temp, y_test = train_test_split(X,y,test_size=0.7)
-    X_train,X_dev, y_train, y_dev = train_test_split(X_temp,y_temp)
+    X = X.sample(frac=1)
+    unique_idx = X["id-hushed_internalpatientid"].unique()
+    idx_split = np.array_split(unique_idx,2)
+    X_test = X[X["id-hushed_internalpatientid"].isin(idx_split[0])]
+    train_X = X[X["id-hushed_internalpatientid"].isin(idx_split[1])]
+    y_test = y.loc[X_test.index]
+    y_train = y.loc[train_X.index]
+    X_train, X_dev, y_train, y_dev = train_test_split(train_X,
+                                                                y_train,
+                                                   test_size=0.7)
 
-    return X_test,y_test,X_train, y_train,X_dev,y_dev
+    return X_test,y_test.to_numpy(),X_train, y_train.to_numpy(),X_dev,y_dev.to_numpy()
 
 def get_unique_labels(y:pd.Series):
     unique = y.unique()
@@ -187,7 +195,7 @@ def kfold_run(X, y_0, y_labels, y_1, k=5):
 
 
 if __name__ == '__main__':
-
+    np.random.seed(1)
     loader = Loader(path=X_PATH,pickled_path=X_PATH_PICKLED)
     loader.load()
     # loader.activate_preprocessing([clean_cols, hot_encoding_noga,

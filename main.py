@@ -68,11 +68,12 @@ def split_train_test_dev(X,y):
     train_X = X[X["id-hushed_internalpatientid"].isin(idx_split[1])]
     y_test = y.loc[X_test.index]
     y_train = y.loc[train_X.index]
-    X_train, X_dev, y_train, y_dev = train_test_split(train_X,y_train,
+    X_train, X_dev, y_train, y_dev = train_test_split(train_X,
+                                                                y_train,
                                                    test_size=0.7)
 
 
-    return X_test,y_test,X_train, y_train,X_dev,y_dev
+    return X_test,y_test.to_numpy(),X_train, y_train.to_numpy(),X_dev,y_dev.to_numpy()
 
 def get_unique_labels(y:pd.Series):
     unique = y.unique()
@@ -144,13 +145,13 @@ def evaluate_2(estimator,X_train: pd.DataFrame, y_train: pd.Series,
     X_train = transform_categorical(X_train)
     X_test = transform_categorical(X_test)
 
-    model = estimator(y_labels)
+    model = estimator()
     model.fit(X_train, y_train)
     print(model.loss(X_test, y_test))
     return model
 
 if __name__ == '__main__':
-    np.random.seed(0)
+    np.random.seed(1)
     loader = Loader(path=X_PATH,pickled_path=X_PATH_PICKLED)
     loader.load()
     # loader.activate_preprocessing([clean_cols, hot_encoding_noga,

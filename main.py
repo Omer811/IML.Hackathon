@@ -15,12 +15,21 @@ from plotly.subplots import make_subplots
 from preprocessing_noga import clean_cols
 from Mission2_Breast_Cancer.Maya_features import preprocessing_by_maya, \
     hot_encoding_noga
+from feature_creation import create_times
 from baseline_estimator_task2 import BaselineEstimatorRegression
 from preprocessing_tomer import tomer_prep
+from mejority_vote import MajorityVoting
 
 X_PATH = "Mission2_Breast_Cancer/train.feats.csv"
+X_PATH_PICKLED = "Mission2_Breast_Cancer/train.feats.csv.pickled"
 Y_PATH_0 = "Mission2_Breast_Cancer/train.labels.0.csv"
 Y_PATH_1 = "Mission2_Breast_Cancer/train.labels.1.csv"
+
+def mean_ids(df:pd.DataFrame):
+    df = pd.concat([df,df['id-hushed_internalpatientid']], axis=1)
+    df = df.groupby('id-hushed_internalpatientid', as_index=False).mean()
+    df.drop(["id-hushed_internalpatientid"], axis=1, inplace=True)
+    return df
 
 def drop_dates(df:pd.DataFrame):
     dates = df.select_dtypes(exclude=[np.number]).columns
@@ -30,9 +39,10 @@ def drop_dates(df:pd.DataFrame):
 def evaluate_1(estimator,X_train: pd.DataFrame, y_train: pd.Series,
              X_test: pd.DataFrame, y_test: pd.Series, labels):
     X_train = transform_categorical(X_train)
+    X_train.to_csv("for_maya_she_doesnt_believe_in_computers.csv")
     X_test = transform_categorical(X_test)
 
-    model = estimator(class_name=labels)
+    model = estimator(labels)
     model.fit(X_train, y_train)
     print(model.loss(X_test,y_test))
     return model
@@ -40,7 +50,7 @@ def evaluate_1(estimator,X_train: pd.DataFrame, y_train: pd.Series,
 def transform_categorical(data:pd.DataFrame):
     categorical_features = data.select_dtypes(exclude=[np.number]).columns
 
-    if len(categorical_features>0):
+    if len(categorical_features)>0:
         encoder = CountFrequencyEncoder(encoding_method='frequency',
                                         variables=categorical_features.to_list())
         encoder.fit(data)
@@ -48,7 +58,7 @@ def transform_categorical(data:pd.DataFrame):
     return data
 def split_train_test_dev(X,y):
 
-    X_temp,X_test, y_temp, y_test = train_test_split(X,y,test_size=0.9)
+    X_temp,X_test, y_temp, y_test = train_test_split(X,y,test_size=0.7)
     X_train,X_dev, y_train, y_dev = train_test_split(X_temp,y_temp)
 
     return X_test,y_test,X_train, y_train,X_dev,y_dev
@@ -84,6 +94,7 @@ def show_conf_matrix(y_true,y_pred,class_labels):
                                                        ["FN: ", "TP: "]]),
                                              cm.astype("<U4")),
                                          showscale=True, colorscale="OrRd")
+        cm.update_layout({"title":class_labels[i]})
         cm.show()
 
 
@@ -128,12 +139,18 @@ def evaluate_2(estimator,X_train: pd.DataFrame, y_train: pd.Series,
     return model
 
 if __name__ == '__main__':
-    loader = Loader(path=X_PATH)
+
+    loader = Loader(path=X_PATH,pickled_path=X_PATH_PICKLED)
     loader.load()
-    loader.activate_preprocessing([clean_cols, hot_encoding_noga,
-                                   preprocessing_by_maya,
-                                   tomer_prep,drop_dates])
+    # loader.activate_preprocessing([clean_cols, hot_encoding_noga,
+    #                                preprocessing_by_maya,
+    #                                tomer_prep,create_times,mean_ids,
+    #                                drop_dates])
+    loader.activate_preprocessing([clean_cols,
+                                   drop_dates])
     loader.save_csv("pre_proc.csv")
+    loader.pickle_data()
+    # loader.load_pickled()
     X = loader.get_data().fillna(0)
     loader = Loader(path=Y_PATH_0)
     loader.load()
@@ -154,7 +171,8 @@ if __name__ == '__main__':
                   X_dev,
              y_dev, y_labels)
 
-    export_results(model,"task1_",X_test,y_labels,y_test,y_name=y_0_name)
+    export_results(model,"task1_",X_test,y_labels,y_test,y_name=y_0_name,
+                   conf=False)
     X_test, y_test, X_train, y_train, X_dev, y_dev = split_train_test_dev(X,
                                                                           y_1)
     model = evaluate_2(BaselineEstimatorRegression, X_train, y_train,

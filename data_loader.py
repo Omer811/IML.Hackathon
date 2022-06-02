@@ -4,7 +4,7 @@ import pandas as pd
 class Loader:
     def __init__(self, path: str = "", pickled_path: str = ""):
         self.path = path
-        self.pickled_path = ""
+        self.pickled_path = pickled_path
         self.df: pd.DataFrame = None
 
     def load(self):

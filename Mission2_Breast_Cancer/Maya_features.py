@@ -109,7 +109,6 @@ def preprocessing_by_maya(df):
     # turning diagnosis dates into time stamps
     df['אבחנה-Diagnosis date'] = pd.to_datetime(df['אבחנה-Diagnosis date'],
                                                 errors='coerce')
-    del df['אבחנה-Diagnosis date']
     return df
 
 # loader = Loader(

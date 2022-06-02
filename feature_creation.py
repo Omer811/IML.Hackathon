@@ -6,14 +6,14 @@ from preprocessing_noga import clean_cols
 from Mission2_Breast_Cancer.Maya_features import preprocessing_by_maya, \
     hot_encoding_noga
 
-# loader = Loader(
-#     path="C:\\Users\\Maya\\Desktop\\School\\IML\\hakathon\\IML.Hackathon\\Mission2_Breast_Cancer\\train.feats.csv")
-# loader.load()
-# df = loader.get_data()
-# df = preprocessing_by_maya(df)
+from preprocessing_noga import clean_cols
+from Mission2_Breast_Cancer.Maya_features import preprocessing_by_maya, \
+    hot_encoding_noga
+from baseline_estimator_task2 import BaselineEstimatorRegression
+from preprocessing_tomer import tomer_prep
+
 
 def create_times(df):
-
     # time between 2 surgeries
     df['time_between_1_2_surgery'] = df["אבחנה-Surgery date2"] - df[
         "אבחנה-Surgery date1"]
@@ -29,6 +29,9 @@ def create_times(df):
     # time first surgery and diagnosis
     df['time_from_first_surgery'] = df['אבחנה-Diagnosis date'] - df[
         "אבחנה-Surgery date1"]
+    df['time_from_first_surgery'] = df[
+                                        'time_from_first_surgery'] / np.timedelta64(
+        1, 'D')
     df.loc[df['אבחנה-Surgery sum'] < 1, 'time_from_first_surgery'] = 0
     df['time_from_first_surgery'] = np.where(
         df['time_from_first_surgery'].astype(str) == 'nan', 0,
@@ -44,8 +47,13 @@ def create_times(df):
     return df
 
 
+# main:
+# loader = Loader(
+#     path="C:\\Users\\Maya\\Desktop\\School\\IML\\hakathon\\IML.Hackathon\\Mission2_Breast_Cancer\\train.feats.csv")
+# loader.load()
+# df = loader.get_data()
+# df = clean_cols(df)
+# df = preprocessing_by_maya(df)
 # df = create_times(df)
-# b = df['time_between_1_2_surgery'].unique()
-# k = df['time_from_first_surgery'].unique()
-#
+# b = df['אבחנה-Diagnosis date']
 # a = 1

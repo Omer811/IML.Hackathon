@@ -2,13 +2,28 @@ import numpy as np
 import pandas as pd
 from data_loader import Loader
 import math
+from preprocessing_noga import clean_cols
 
 
 def cleanup_duplicates(df):
-    #  remove duplicates fronm data
+    a = 1
 
 
+def hot_encoding_noga(df):
 
+    # 1-hot-encoding for categorical features
+    cols = ['אבחנה-Surgery name1', 'אבחנה-Surgery name2', 'אבחנה-Surgery name3',
+            'אבחנה-T -Tumor mark (TNM)', 'surgery before or after-Actual activity']
+    for col in cols:
+        df = pd.concat([df, pd.get_dummies(df[col])], axis=1)
+
+    # Change er and pr to -1,0,1
+    dict = {'pos': 1, 'neg': -1, 'unknown': 0}
+    for key, value in dict.items():
+        df['אבחנה-er'] = np.where(df['אבחנה-er'].astype(str) == key,
+                                  value, df['אבחנה-er'])
+        df['אבחנה-pr'] = np.where(df['אבחנה-pr'].astype(str) == key,
+                                  value, df['אבחנה-pr'])
 
 
 def preprocessing_by_maya(df):
@@ -59,23 +74,30 @@ def preprocessing_by_maya(df):
     df.loc[idx, 'אבחנה-Positive nodes'] = 0
 
     # Replace missing values with unknowns and create dummies
-    df['אבחנה-Side'] = np.where(df['אבחנה-Side'].astype(str) == 'nan', 'side unknown',
+    df['אבחנה-Side'] = np.where(df['אבחנה-Side'].astype(str) == 'nan',
+                                'side unknown',
                                 df['אבחנה-Side'])
     df = pd.concat([df, pd.get_dummies(df['אבחנה-Side'])], axis=1)
     del df['אבחנה-Side']
 
-    dict = {'Stage0': 0, 'Stage0a': 0, 'Stage0is': 0, 'Stage1': 1, 'Stage1a': 1.3,
-         'Stage1b': 1.5, 'Stage1c': 1.7, 'Stage2': 2, 'Stage2a': 2.3,
-         'Stage2b': 2.6, 'Stage3': 3, 'Stage3a': 3.2, 'Stage3b': 3.5,
-         'Stage3c': 3.8, 'Stage4': 4, 'LA': 3, 'nan':0, 'Not yet Established':0}
-    for bad,good in dict.items():
-        df['אבחנה-Stage'] = np.where(df['אבחנה-Stage'].astype(str) == bad, good, df['אבחנה-Stage'])
+    dict = {'Stage0': 0, 'Stage0a': 0, 'Stage0is': 0, 'Stage1': 1,
+            'Stage1a': 1.3,
+            'Stage1b': 1.5, 'Stage1c': 1.7, 'Stage2': 2, 'Stage2a': 2.3,
+            'Stage2b': 2.6, 'Stage3': 3, 'Stage3a': 3.2, 'Stage3b': 3.5,
+            'Stage3c': 3.8, 'Stage4': 4, 'LA': 3, 'nan': 0,
+            'Not yet Established': 0}
+    for key, val in dict.items():
+        df['אבחנה-Stage'] = np.where(df['אבחנה-Stage'].astype(str) == key,
+                                     val, df['אבחנה-Stage'])
+    a = 1
 
+    return df
 
 
 loader = Loader(
     path="C:\\Users\\Maya\\Desktop\\School\\IML\\hakathon\\IML.Hackathon\\Mission2_Breast_Cancer\\train.feats.csv")
 loader.load()
 df = loader.get_data()
-preprocessing_by_maya(df)
+df = preprocessing_by_maya(df)
+clean_cols(df)
 a = 1

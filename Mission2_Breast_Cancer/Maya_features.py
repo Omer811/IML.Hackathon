@@ -20,12 +20,13 @@ def hot_encoding_noga(df):
         del df[col]
 
     # Change er and pr to -1,0,1
-    dict = {'pos': 1, 'neg': -1, 'unknown': 0}
+    dict = {'Positive': 1, 'Negative': 0}
     for key, value in dict.items():
         df['אבחנה-er'] = np.where(df['אבחנה-er'].astype(str) == key,
                                   value, df['אבחנה-er'])
         df['אבחנה-pr'] = np.where(df['אבחנה-pr'].astype(str) == key,
                                   value, df['אבחנה-pr'])
+
 
     return df
 
@@ -39,7 +40,7 @@ def preprocessing_by_maya(df):
     df = pd.concat([df, pd.get_dummies(df[" Form Name"])], axis=1)
     del df[' Form Name']
 
-    return df
+
 
     # Here we should consider to seperate LI into a seperate column, beacause it is not necasseriley lower than L1 and L2.
 

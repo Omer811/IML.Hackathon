@@ -21,6 +21,7 @@ class XGB1(BaseEstimator):
             self.classifiers[i].fit(X,y[:,i])
 
     def _predict(self, X: pd.DataFrame):
+        X = X[X.columns.unique()]
         pred = np.empty((X.shape[0],self.n_classes))
         for i in range(self.n_classes):
             pred[:,i] = self.classifiers[i].predict(X)

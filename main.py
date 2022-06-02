@@ -21,17 +21,23 @@ from preprocessing_tomer import tomer_prep
 from multivariate_regression import MultivariateReg
 from evaluate_part_0_non_cmd import run_eval
 from baseline_estimator_2_adaboost import BaselineEstimatorMultipleClassifiersADA
-
+from xgboost_1 import XGB1
+from xgboost_2 import XGB2
 X_PATH = "Mission2_Breast_Cancer/train.feats.csv"
 X_PATH_PICKLED = "Mission2_Breast_Cancer/train.feats.csv.pickled"
 Y_PATH_0 = "Mission2_Breast_Cancer/train.labels.0.csv"
 Y_PATH_1 = "Mission2_Breast_Cancer/train.labels.1.csv"
 
-def mean_ids(df:pd.DataFrame):
-    df = pd.concat([df,df['id-hushed_internalpatientid']], axis=1)
+def mean_ids(df:pd.DataFrame,y0,y1):
+    df = pd.concat([df,y0,y1], axis=1)
+    df = df.dropna()
+    # %%
     df = df.groupby('id-hushed_internalpatientid', as_index=False).mean()
-    df.drop(["id-hushed_internalpatientid"], axis=1, inplace=True)
-    return df
+    # df.drop(["id-hushed_internalpatientid"], axis=1, inplace=True)
+    y0 = df[df.columns[-12:-1]]
+    y1 = df[df.columns[-1]]
+    df= df.drop(columns=df.columns[-12:])
+    return df,y0,y1
 
 def drop_dates(df:pd.DataFrame):
     ids = df["id-hushed_internalpatientid"]
@@ -41,14 +47,14 @@ def drop_dates(df:pd.DataFrame):
     return df
 
 def evaluate_1(estimator,X_train: pd.DataFrame, y_train: pd.Series,
-             X_test: pd.DataFrame, y_test: pd.Series, labels):
+             X_test: pd.DataFrame, labels):
     X_train = transform_categorical(X_train)
-    X_train.to_csv("for_maya_she_doesnt_believe_in_computers.csv")
-    X_test = transform_categorical(X_test)
+    #X_train.to_csv("for_maya_she_doesnt_believe_in_computers.csv")
+    # X_test = transform_categorical(X_test)
 
     model = estimator(labels)
     # model = estimator()
-    model.fit(X_train, y_train)
+    model.fit(X_train, y_train.to_numpy())
     return model
 
 def transform_categorical(data:pd.DataFrame):
@@ -66,6 +72,8 @@ def split_train_test_dev(X,y):
     idx_split = np.array_split(unique_idx,2)
     X_test = X[X["id-hushed_internalpatientid"].isin(idx_split[0])]
     train_X = X[X["id-hushed_internalpatientid"].isin(idx_split[1])]
+    del X_test["id-hushed_internalpatientid"]
+    del train_X["id-hushed_internalpatientid"]
     y_test = y.loc[X_test.index]
     y_train = y.loc[train_X.index]
     X_train, X_dev, y_train, y_dev = train_test_split(train_X,y_train,
@@ -80,20 +88,21 @@ def get_unique_labels(y:pd.Series):
     unique = list(reduce(lambda x,y:x+y,unique))
     return list(set(unique))
 
-def binarize_y(y:pd.Series)->pd.Series:
+def binarize_y(y:pd.DataFrame)->pd.Series:
+    idx = y.index
     unique_lables = get_unique_labels(y)
     y = y.to_list()
     y = [ast.literal_eval(val) for val in y]
 
     lb = preprocessing.MultiLabelBinarizer(classes = unique_lables)
     #unique_labels = get_unique_labels(y_0)
-    y_transformed = lb.fit_transform(y)
+    y_transformed = pd.DataFrame(lb.fit_transform(y))
     #y_0 = lb.transform(y_0)
+    y_transformed.set_index(idx)
     return y_transformed,unique_lables
 
 
 def show_conf_matrix(y_true,y_pred,class_labels):
-
     for i in range (len(class_labels)):
         cm = confusion_matrix(y_true=y_true[:,i],  y_pred=y_pred[:,i],
                               labels=[0, 1])
@@ -113,7 +122,7 @@ def show_conf_matrix(y_true,y_pred,class_labels):
 def export_results(model:BaseEstimator,path, X_test,class_labels,
                    y_test:pd.Series,y_name,
                    conf=False,parse_y = True):
-    X_test = transform_categorical(X_test)
+    # X_test = transform_categorical(X_test)
     pred = model.predict(X_test)
     t_pred = pred
     if parse_y:
@@ -140,29 +149,96 @@ def transform_prediction_to_list(class_labels, pred):
     return pred
 
 def evaluate_2(estimator,X_train: pd.DataFrame, y_train: pd.Series,
-             X_test: pd.DataFrame, y_test: pd.Series):
+             X_test: pd.DataFrame):
     X_train = transform_categorical(X_train)
     X_test = transform_categorical(X_test)
 
     model = estimator()
     model.fit(X_train, y_train)
-    print(model.loss(X_test, y_test))
+
     return model
+
+def submit():
+    loader = Loader(path=X_PATH, pickled_path=X_PATH_PICKLED)
+    loader.load()
+    loader.activate_preprocessing([clean_cols, hot_encoding_noga,
+                                   preprocessing_by_maya, create_times,
+                                   drop_dates])
+    X = loader.get_data()
+    loader = Loader(path=Y_PATH_0)
+    loader.load()
+    y_0 = loader.get_data().loc[X.index]
+    y_0_name = y_0.columns[0]
+    y_0 = y_0.squeeze().rename(y_0_name)  # transform to Series
+
+    y_0, y_labels = binarize_y(y_0)
+    loader = Loader(path=Y_PATH_1)
+    loader.load()
+    y_1 = loader.get_data().loc[X.index]
+    y_1_name = y_1.columns[0]
+    y_1 = y_1.squeeze().rename(y_1_name)  # transform to Series
+
+    X, y_0, y_1 = mean_ids(X, y_0, y_1)
+    y_1.rename(y_1_name)
+
+    loader = Loader(path="Mission2_Breast_Cancer/test.feats.csv")
+    loader.load()
+    loader.activate_preprocessing([clean_cols, hot_encoding_noga,
+                                  preprocessing_by_maya,create_times,
+                                     drop_dates])
+    X_test = loader.get_data()
+    diff = set(X.columns).union(set(X_test.columns)) - set(
+        X.columns).intersection(set(X_test.columns))
+    # X=X.drop(columns=diff)
+    # X_test = X_test.drop(columns=diff)
+    # for val in diff:
+    #     if val in X.columns:
+    #         # del X[val]
+    #         X = X.drop(columns=[val])
+    #     if val in X_test.columns:
+    #         X_test = X_test.drop(columns=[val])
+    #         # del X_test[val]
+    # temp = X[diff]
+    # X_test
+    # del X_test[set(X.columns).union(set(X_test.columns)) - set(
+    #     X.columns).intersection(set(X.columns))]
+    # Get missing columns in the training test
+    # missing_cols = set(X.columns) - set(X_test.columns)
+    # # Add a missing column in test set with default value equal to 0
+    # for c in missing_cols:
+    #     X_test[c] = 0
+    # # Ensure the order of column in the test set is in the same order than in train set
+    # X_test = X_test[X.columns]
+    del X["id-hushed_internalpatientid"]
+    del X_test["id-hushed_internalpatientid"]
+    X, X_test = X.align(X_test, join='outer', axis=1, fill_value=0)
+    model = evaluate_1(BaselineEstimatorMultipleClassifiers, X, y_0,
+                       X_test,labels= y_labels)
+
+    export_results(model, "task1_", X_test, y_labels, None, y_name=y_0_name,
+                   conf=False)
+
+
+    model = evaluate_2(XGB2, X, y_1, X_test)
+
+    export_results(model, "task2_", X_test, y_labels, None, y_name=y_1_name,
+                   parse_y=False)
 
 if __name__ == '__main__':
     np.random.seed(0)
+    submit()
+    exit()
     loader = Loader(path=X_PATH,pickled_path=X_PATH_PICKLED)
-    loader.load()
+    # loader.load()
     # loader.activate_preprocessing([clean_cols, hot_encoding_noga,
-    #                                preprocessing_by_maya,
-    #                                tomer_prep,create_times,mean_ids,
+    #                                preprocessing_by_maya,create_times,
     #                                drop_dates])
-    loader.activate_preprocessing([clean_cols,hot_encoding_noga,create_times,
-                                   drop_dates])
-    loader.save_csv("pre_proc.csv")
-    loader.pickle_data()
-    # loader.load_pickled()
-    X = loader.get_data().fillna(0)
+    # # loader.activate_preprocessing([clean_cols,hot_encoding_noga,create_times,
+    # #                                drop_dates])
+    # # loader.save_csv("pre_proc.csv")
+    # loader.pickle_data()
+    loader.load_pickled()
+    X = loader.get_data()
     loader = Loader(path=Y_PATH_0)
     loader.load()
     y_0 = loader.get_data().loc[X.index]
@@ -176,19 +252,21 @@ if __name__ == '__main__':
     y_1_name = y_1.columns[0]
     y_1 = y_1.squeeze().rename(y_1_name) # transform to Series
 
+    X,y_0,y_1 = mean_ids(X,y_0,y_1)
+    y_1.rename(y_1_name)
+
 
     X_test, y_test, X_train, y_train, X_dev, y_dev = split_train_test_dev(X,
-                                                                          pd.DataFrame(y_0))
+                                                                          y_0)
     model = evaluate_1(BaselineEstimatorMultipleClassifiers,X_train, y_train,
-                  X_dev,
-             y_dev, y_labels)
+                  X_dev,  y_dev, y_labels)
 
     export_results(model,"task1_",X_test,y_labels,y_test,y_name=y_0_name,
                    conf=False)
     #run_eval("task1_y_pred.csv","task1_y_test.csv")
     X_test, y_test, X_train, y_train, X_dev, y_dev = split_train_test_dev(X,
                                                                           y_1)
-    model = evaluate_2(BaselineEstimatorRegression, X_train, y_train,
+    model = evaluate_2(XGB2, X_train, y_train,
                        X_dev, y_dev)
 
     export_results(model, "task2_", X_test, y_labels, y_test,y_name=y_1_name,

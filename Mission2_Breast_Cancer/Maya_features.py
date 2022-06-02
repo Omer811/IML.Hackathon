@@ -16,7 +16,7 @@ def hot_encoding_noga(df):
             'אבחנה-T -Tumor mark (TNM)',
             'surgery before or after-Actual activity']
     for col in cols:
-        df = pd.concat([df, pd.get_dummies(df[col])], axis=1)
+        df = pd.concat([df, pd.get_dummies(df[col],prefix=col)], axis=1)
         del df[col]
 
     # Change er and pr to -1,0,1
@@ -37,7 +37,8 @@ def preprocessing_by_maya(df):
     # Form Name - Replace one category with another, and divide into dummies
     df[" Form Name"] = df[' Form Name'].replace(['אנמנזה סיעודית קצרה'],
                                                 'אנמנזה סיעודית')
-    df = pd.concat([df, pd.get_dummies(df[" Form Name"])], axis=1)
+    df = pd.concat([df, pd.get_dummies(df[" Form Name"],prefix='Form')],
+                   axis=1)
     del df[' Form Name']
 
     # Here we should consider to seperate LI into a seperate column, beacause it is not necasseriley lower than L1 and L2.
@@ -60,12 +61,14 @@ def preprocessing_by_maya(df):
     # I turned Null into not yet established, and created dummy variables
     df['אבחנה-M -metastases mark (TNM)'].fillna('Not yet Established',
                                                 inplace=True)
-    df = pd.concat([df, pd.get_dummies(df['אבחנה-M -metastases mark (TNM)'])],
+    df = pd.concat([df, pd.get_dummies(df['אבחנה-M -metastases mark (TNM)'],
+                                       prefix="metas")],
                    axis=1)
     del df['אבחנה-M -metastases mark (TNM)']
 
     # Margin type as dummy variables. Should we connect "ללא" u "נקיים"?
-    df = pd.concat([df, pd.get_dummies(df['אבחנה-Margin Type'])],
+    df = pd.concat([df, pd.get_dummies(df['אבחנה-Margin Type'],
+                                       prefix="type_")],
                    axis=1)
     del df['אבחנה-Margin Type']
 
@@ -74,7 +77,8 @@ def preprocessing_by_maya(df):
         {'#NAME?': "", 'NX': 'Not yet Established'}, inplace=True)
     df['אבחנה-N -lymph nodes mark (TNM)'].fillna('Not yet Established',
                                                  inplace=True)
-    df = pd.concat([df, pd.get_dummies(df['אבחנה-N -lymph nodes mark (TNM)'])],
+    df = pd.concat([df, pd.get_dummies(df['אבחנה-N -lymph nodes mark ('
+                                          'TNM)'],prefix="lymph")],
                    axis=1)
     del df['אבחנה-N -lymph nodes mark (TNM)']
 
@@ -92,7 +96,8 @@ def preprocessing_by_maya(df):
     df['אבחנה-Side'] = np.where(df['אבחנה-Side'].astype(str) == 'nan',
                                 'side unknown',
                                 df['אבחנה-Side'])
-    df = pd.concat([df, pd.get_dummies(df['אבחנה-Side'])], axis=1)
+    df = pd.concat([df, pd.get_dummies(df['אבחנה-Side'],prefix="side")],
+    axis=1)
     del df['אבחנה-Side']
 
     dict = {'Stage0': 0, 'Stage0a': 0, 'Stage0is': 0, 'Stage1': 1,

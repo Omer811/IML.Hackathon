@@ -74,7 +74,7 @@ def clean_cols(df):
                                                                  errors='coerce')
 
     # Drop id column
-    #df.drop(["id-hushed_internalpatientid"], axis=1, inplace=True)
+    # df.drop(["id-hushed_internalpatientid"], axis=1, inplace=True)
 
     # Surgery sum > 0, replace negative and null with 0
     df["אבחנה-Surgery sum"].fillna(0, inplace=True)

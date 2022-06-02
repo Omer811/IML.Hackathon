@@ -13,10 +13,13 @@ class BaselineEstimator(BaseEstimator):
         self.classes=class_name
 
     def _fit(self, X: pd.DataFrame, y: pd.Series):
-        self.u_estimator = OneVsRestClassifier(SVC(), n_jobs=self.n_jobs).fit(X, y)
+        self.u_estimator = OneVsRestClassifier(SVC(),
+                                               n_jobs=self.n_jobs)
+        self.u_estimator.fit(
+            X.to_numpy(), y.to_numpy())
 
     def _predict(self, X: pd.DataFrame):
-        probs = self.u_estimator.predict_proba(X)
+        probs = self.u_estimator.predict(X.to_numpy())
         return pd.Series(np.argsort(probs, axis=1)[:,:3])
 
 

@@ -18,7 +18,9 @@ from Mission2_Breast_Cancer.Maya_features import preprocessing_by_maya, \
 from feature_creation import create_times
 from baseline_estimator_task2 import BaselineEstimatorRegression
 from preprocessing_tomer import tomer_prep
-from mejority_vote import MajorityVoting
+from multivariate_regression import MultivariateReg
+from evaluate_part_0_non_cmd import run_eval
+from baseline_estimator_2_adaboost import BaselineEstimatorMultipleClassifiersADA
 
 X_PATH = "Mission2_Breast_Cancer/train.feats.csv"
 X_PATH_PICKLED = "Mission2_Breast_Cancer/train.feats.csv.pickled"
@@ -33,6 +35,7 @@ def mean_ids(df:pd.DataFrame):
 
 def drop_dates(df:pd.DataFrame):
     dates = df.select_dtypes(exclude=[np.number]).columns
+
     df = df.drop(columns=dates)
     return df
 
@@ -42,9 +45,9 @@ def evaluate_1(estimator,X_train: pd.DataFrame, y_train: pd.Series,
     X_train.to_csv("for_maya_she_doesnt_believe_in_computers.csv")
     X_test = transform_categorical(X_test)
 
-    model = estimator(labels)
+    # model = estimator(labels)
+    model = estimator()
     model.fit(X_train, y_train)
-    print(model.loss(X_test,y_test))
     return model
 
 def transform_categorical(data:pd.DataFrame):
@@ -57,9 +60,16 @@ def transform_categorical(data:pd.DataFrame):
         return encoder.transform(data)
     return data
 def split_train_test_dev(X,y):
+    unique_idx = X["id-hushed_internalpatientid"].unique()
+    idx_split = np.arange(len(unique_idx))
+    idx_split = np.array_split(idx_split,2)
+    test_X = X[X["id-hushed_internalpatientid"] in idx_split[0]]
+    train_X = X[X["id-hushed_internalpatientid"] in idx_split[1]]
+    y_test = y.loc[test_X.index]
+    y_train = y.loc[train_X.index]
+    X_train,X_dev, y_train, y_dev = train_test_split(train_X,test_X,
+                                                   test_size=0.7)
 
-    X_temp,X_test, y_temp, y_test = train_test_split(X,y,test_size=0.7)
-    X_train,X_dev, y_train, y_dev = train_test_split(X_temp,y_temp)
 
     return X_test,y_test,X_train, y_train,X_dev,y_dev
 
@@ -133,20 +143,21 @@ def evaluate_2(estimator,X_train: pd.DataFrame, y_train: pd.Series,
     X_train = transform_categorical(X_train)
     X_test = transform_categorical(X_test)
 
-    model = estimator()
+    model = estimator(y_labels)
     model.fit(X_train, y_train)
     print(model.loss(X_test, y_test))
     return model
 
 if __name__ == '__main__':
-
+    np.random.seed(0)
     loader = Loader(path=X_PATH,pickled_path=X_PATH_PICKLED)
     loader.load()
     # loader.activate_preprocessing([clean_cols, hot_encoding_noga,
     #                                preprocessing_by_maya,
     #                                tomer_prep,create_times,mean_ids,
     #                                drop_dates])
-    loader.activate_preprocessing([clean_cols])
+    loader.activate_preprocessing([clean_cols,hot_encoding_noga,create_times,
+                                   drop_dates])
     loader.save_csv("pre_proc.csv")
     loader.pickle_data()
     # loader.load_pickled()
@@ -166,15 +177,16 @@ if __name__ == '__main__':
 
 
     X_test, y_test, X_train, y_train, X_dev, y_dev = split_train_test_dev(X, y_0)
-    model = evaluate_1(BaselineEstimatorMultipleClassifiers,X_train, y_train,
+    model = evaluate_1(MultivariateReg,X_train, y_train,
                   X_dev,
              y_dev, y_labels)
 
     export_results(model,"task1_",X_test,y_labels,y_test,y_name=y_0_name,
                    conf=False)
+    #run_eval("task1_y_pred.csv","task1_y_test.csv")
     X_test, y_test, X_train, y_train, X_dev, y_dev = split_train_test_dev(X,
                                                                           y_1)
-    model = evaluate_2(BaselineEstimatorRegression, X_train, y_train,
+    model = evaluate_2(BaselineEstimatorMultipleClassifiersADA, X_train, y_train,
                        X_dev, y_dev)
 
     export_results(model, "task2_", X_test, y_labels, y_test,y_name=y_1_name,

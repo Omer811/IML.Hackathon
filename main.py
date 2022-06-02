@@ -146,8 +146,7 @@ if __name__ == '__main__':
     #                                preprocessing_by_maya,
     #                                tomer_prep,create_times,mean_ids,
     #                                drop_dates])
-    loader.activate_preprocessing([clean_cols,
-                                   drop_dates])
+    loader.activate_preprocessing([clean_cols])
     loader.save_csv("pre_proc.csv")
     loader.pickle_data()
     # loader.load_pickled()

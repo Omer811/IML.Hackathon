@@ -14,6 +14,12 @@ from preprocessing_tomer import tomer_prep
 
 
 def create_times(df):
+
+    # turning diagnosis dates into time stamps
+    df['אבחנה-Diagnosis date'] = pd.to_datetime(df['אבחנה-Diagnosis date'],
+                                                errors='coerce')
+
+
     # time between 2 surgeries
     df['time_between_1_2_surgery'] = df["אבחנה-Surgery date2"] - df[
         "אבחנה-Surgery date1"]

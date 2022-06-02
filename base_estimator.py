@@ -10,7 +10,7 @@ BaseEstimator.py file
 from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import NoReturn
-import numpy as np
+import pandas as pd
 
 
 class BaseEstimator(ABC):
@@ -29,7 +29,7 @@ class BaseEstimator(ABC):
         """
         self.fitted_ = False
 
-    def fit(self, X: np.ndarray, y: np.ndarray) -> BaseEstimator:
+    def fit(self, X: pd.DataFrame, y: pd.Series) -> BaseEstimator:
         """
         Fit estimator for given input samples and responses
 
@@ -52,7 +52,7 @@ class BaseEstimator(ABC):
         self.fitted_ = True
         return self
 
-    def predict(self, X: np.ndarray) -> np.ndarray:
+    def predict(self, X: pd.DataFrame) -> pd.Series:
         """
         Predict responses for given samples using fitted estimator
 
@@ -74,7 +74,7 @@ class BaseEstimator(ABC):
             raise ValueError("Estimator must first be fitted before calling ``predict``")
         return self._predict(X)
 
-    def loss(self, X: np.ndarray, y: np.ndarray) -> float:
+    def loss(self, X: pd.DataFrame, y: pd.Series) -> float:
         """
         Evaluate performance under loss function specified for estimator
 
@@ -100,7 +100,7 @@ class BaseEstimator(ABC):
         return self._loss(X, y)
 
     @abstractmethod
-    def _fit(self, X: np.ndarray, y: np.ndarray) -> NoReturn:
+    def _fit(self, X: pd.DataFrame, y: pd.Series) -> NoReturn:
         """
         Fit estimator for given input samples and responses
 
@@ -115,7 +115,7 @@ class BaseEstimator(ABC):
         raise NotImplementedError()
 
     @abstractmethod
-    def _predict(self, X: np.ndarray) -> np.ndarray:
+    def _predict(self, X: pd.DataFrame, y: pd.Series) -> pd.Series:
         """
         Predict responses for given samples using fitted estimator
 
@@ -132,7 +132,7 @@ class BaseEstimator(ABC):
         raise NotImplementedError()
 
     @abstractmethod
-    def _loss(self, X: np.ndarray, y: np.ndarray) -> float:
+    def _loss(self, X: pd.DataFrame, y: pd.Series) -> float:
         """
         Evaluate performance under loss function specified for estimator
 
@@ -151,7 +151,7 @@ class BaseEstimator(ABC):
         """
         raise NotImplementedError()
 
-    def fit_predict(self, X: np.ndarray, y: np.ndarray) -> np.ndarray:
+    def fit_predict(self,X: pd.DataFrame, y: pd.Series) -> pd.Series:
         """
         Fit an estimator over given input data and predict responses for given samples
 

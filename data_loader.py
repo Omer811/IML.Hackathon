@@ -8,7 +8,7 @@ class Loader:
         self.df: pd.DataFrame = None
 
     def load(self):
-        self.df = pd.read_csv(self.path)
+        self.df = pd.read_csv(self.path,parse_dates=True)
 
     def activate_preprocessing(self, pre_processing_functions):
         for fun in pre_processing_functions:

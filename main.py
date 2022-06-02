@@ -8,6 +8,13 @@ from data_loader import Loader
 from sklearn import preprocessing
 import ast
 from functools import reduce
+from sklearn.metrics import confusion_matrix
+import plotly.figure_factory as ff
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+from preprocessing_noga import clean_cols
+from Mission2_Breast_Cancer.Maya_features import preprocessing_by_maya, \
+    hot_encoding_noga
 
 X_PATH = "Mission2_Breast_Cancer/train.feats.csv"
 Y_PATH = "Mission2_Breast_Cancer/train.labels.0.csv"
@@ -53,20 +60,42 @@ def binarize_y(y:pd.Series)->pd.Series:
     return y_transformed,unique_lables
 
 
-def export_results(model:BaseEstimator, X_test,class_labels, y_test=None):
+def show_conf_matrix(y_true,y_pred,class_labels):
+
+    for i in range (len(class_labels)):
+        cm = confusion_matrix(y_true=y_true[:,i],  y_pred=y_pred[:,i],
+                              labels=[0, 1])
+        cm = ff.create_annotated_heatmap(cm, y=[r"$y = 0$", r"$y = 1$"],
+                                         x=[r"$\widehat{y} = 0$",
+                                            r"$\widehat{y}=1$"],
+                                         annotation_text=np.core.defchararray.add(
+                                             np.array([["TN: ", "FP: "],
+                                                       ["FN: ", "TP: "]]),
+                                             cm.astype("<U4")),
+                                         showscale=True, colorscale="OrRd")
+        cm.show()
+
+
+
+def export_results(model:BaseEstimator, X_test,class_labels, y_test=None,
+                   conf=False):
     X_test = transform_categorical(X_test)
     pred = model.predict(X_test)
-    pred = transform_prediction_to_list(class_labels, pred)
-    pd.Series(pred).to_csv("pred.csv",index=False)
+    t_pred = transform_prediction_to_list(class_labels, pred)
+    pd.Series(t_pred).to_csv("pred.csv",index=False)
     if y_test is not None:
-        y_test = transform_prediction_to_list(class_labels, y_test)
-        pd.Series(y_test).to_csv("y_test.csv",index=False)
+        t_y_test = transform_prediction_to_list(class_labels, y_test)
+        pd.Series(t_y_test).to_csv("y_test.csv",index=False)
+    else:
+        t_y_test = y_test
+    if conf:
+        show_conf_matrix(y_test,pred,class_labels)
 
 
 def transform_prediction_to_list(class_labels, pred):
     class_labels = np.array(class_labels)
-    pred = [[class_labels[i] if i == 1 else None for i in line] for line in \
-            pred.astype(int)]  # encode names of classes
+    pred = [[class_labels[i] if line[i] == 1 else None for i in range(len(
+        line))] for line in pred.astype(int)]  # encode names of classes
     pred = [[class_name for class_name in line if class_name is not None]
             for line in
             pred]  # remove None values
@@ -77,7 +106,10 @@ def transform_prediction_to_list(class_labels, pred):
 if __name__ == '__main__':
     loader = Loader(path=X_PATH)
     loader.load()
-    X=loader.get_data().fillna(0).drop_duplicates()
+    loader.activate_preprocessing([clean_cols, hot_encoding_noga,
+                                   preprocessing_by_maya])
+    loader.save_csv("pre_proc.csv")
+    X=loader.get_data()
     loader = Loader(path=Y_PATH)
     loader.load()
     y = loader.get_data().loc[X.index]

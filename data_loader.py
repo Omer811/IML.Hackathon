@@ -25,3 +25,6 @@ class Loader:
     def get_data(self) -> pd.DataFrame:
         if self.df is not None:
             return self.df
+
+    def save_csv(self,path):
+        self.df.to_csv(path)

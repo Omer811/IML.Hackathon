@@ -25,6 +25,7 @@ def hot_encoding_noga(df):
         df['אבחנה-pr'] = np.where(df['אבחנה-pr'].astype(str) == key,
                                   value, df['אבחנה-pr'])
 
+    return df
 
 def preprocessing_by_maya(df):
     # df.rename(columns={' Form Name': 'Form Name'}, inplace=True)
@@ -34,6 +35,7 @@ def preprocessing_by_maya(df):
                                                 'אנמנזה סיעודית')
     df = pd.concat([df, pd.get_dummies(df[" Form Name"])], axis=1)
     del df[' Form Name']
+
 
     # Here we should consider to seperate LI into a seperate column, beacause it is not necasseriley lower than L1 and L2.
     df['אבחנה-Lymphatic penetration'].replace(
@@ -94,10 +96,10 @@ def preprocessing_by_maya(df):
     return df
 
 
-loader = Loader(
-    path="C:\\Users\\Maya\\Desktop\\School\\IML\\hakathon\\IML.Hackathon\\Mission2_Breast_Cancer\\train.feats.csv")
-loader.load()
-df = loader.get_data()
-df = preprocessing_by_maya(df)
-clean_cols(df)
-a = 1
+# loader = Loader(
+#     path="C:\\Users\\Maya\\Desktop\\School\\IML\\hakathon\\IML.Hackathon\\Mission2_Breast_Cancer\\train.feats.csv")
+# loader.load()
+# df = loader.get_data()
+# df = preprocessing_by_maya(df)
+# clean_cols(df)
+# a = 1

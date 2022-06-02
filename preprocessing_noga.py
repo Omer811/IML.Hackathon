@@ -3,7 +3,7 @@ import pandas as pd
 from collections import defaultdict
 
 
-TNM_MAP = r"C:\Users\yaelk\PycharmProjects\IML.Hackathon\Mission2_Breast_Cancer\tnm.txt"
+TNM_MAP = r"Mission2_Breast_Cancer/tnm.txt"
 NAN = 0
 OTHER = "other"
 POSITIVE_REGEX = r"(pos|Pos|POS|po|\+|[0-9]+.*[0-9]*\%*|jhuch|חיובי|strong|Strong|STRONG|high|High|HIGH|beg)"
@@ -69,3 +69,5 @@ def clean_cols(df):
 
     # Surgery sum > 0, replace negative and null with 0
     df["אבחנה-Surgery sum"].fillna(0, inplace=True)
+
+    return df

@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from feature_engine.encoding import CountFrequencyEncoder
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, KFold
 from baseline_estimator import BaselineEstimator
 from baseline_estimator_2 import BaselineEstimatorMultipleClassifiers,BaseEstimator
 from data_loader import Loader
@@ -18,9 +18,8 @@ from Mission2_Breast_Cancer.Maya_features import preprocessing_by_maya, \
 from feature_creation import create_times
 from baseline_estimator_task2 import BaselineEstimatorRegression
 from preprocessing_tomer import tomer_prep
-from multivariate_regression import MultivariateReg
-from evaluate_part_0_non_cmd import run_eval
-from baseline_estimator_2_adaboost import BaselineEstimatorMultipleClassifiersADA
+import evaluate_0_pycharm
+import evaluate_1_pycharm
 
 X_PATH = "Mission2_Breast_Cancer/train.feats.csv"
 X_PATH_PICKLED = "Mission2_Breast_Cancer/train.feats.csv.pickled"
@@ -34,21 +33,20 @@ def mean_ids(df:pd.DataFrame):
     return df
 
 def drop_dates(df:pd.DataFrame):
-    ids = df["id-hushed_internalpatientid"]
     dates = df.select_dtypes(exclude=[np.number]).columns
     df = df.drop(columns=dates)
-    df["id-hushed_internalpatientid"] = ids
     return df
 
 def evaluate_1(estimator,X_train: pd.DataFrame, y_train: pd.Series,
              X_test: pd.DataFrame, y_test: pd.Series, labels):
+
     X_train = transform_categorical(X_train)
     X_train.to_csv("for_maya_she_doesnt_believe_in_computers.csv")
     X_test = transform_categorical(X_test)
 
     model = estimator(labels)
-    # model = estimator()
     model.fit(X_train, y_train)
+    print(model.loss(X_test,y_test))
     return model
 
 def transform_categorical(data:pd.DataFrame):
@@ -61,16 +59,9 @@ def transform_categorical(data:pd.DataFrame):
         return encoder.transform(data)
     return data
 def split_train_test_dev(X,y):
-    X = X.sample(frac=1)
-    unique_idx = X["id-hushed_internalpatientid"].unique()
-    idx_split = np.array_split(unique_idx,2)
-    X_test = X[X["id-hushed_internalpatientid"].isin(idx_split[0])]
-    train_X = X[X["id-hushed_internalpatientid"].isin(idx_split[1])]
-    y_test = y.loc[X_test.index]
-    y_train = y.loc[train_X.index]
-    X_train, X_dev, y_train, y_dev = train_test_split(train_X,y_train,
-                                                   test_size=0.7)
 
+    X_temp,X_test, y_temp, y_test = train_test_split(X,y,test_size=0.7)
+    X_train,X_dev, y_train, y_dev = train_test_split(X_temp,y_temp)
 
     return X_test,y_test,X_train, y_train,X_dev,y_dev
 
@@ -144,21 +135,66 @@ def evaluate_2(estimator,X_train: pd.DataFrame, y_train: pd.Series,
     X_train = transform_categorical(X_train)
     X_test = transform_categorical(X_test)
 
-    model = estimator(y_labels)
+    model = estimator()
     model.fit(X_train, y_train)
     print(model.loss(X_test, y_test))
     return model
 
+def normal_run(X, y_0, y_1):
+    X_test, y_test, X_train, y_train, X_dev, y_dev = split_train_test_dev(X, y_0)
+    model = evaluate_1(BaselineEstimatorMultipleClassifiers, X_train, y_train,
+                       X_dev,
+                       y_dev, y_labels)
+
+    export_results(model, "task1_", X_test, y_labels, y_test, y_name=y_0_name,
+                   conf=False)
+    X_test, y_test, X_train, y_train, X_dev, y_dev = split_train_test_dev(X,
+                                                                          y_1)
+    model = evaluate_2(BaselineEstimatorRegression, X_train, y_train,
+                       X_dev, y_dev)
+
+    export_results(model, "task2_", X_test, y_labels, y_test, y_name=y_1_name,
+                   parse_y=False)
+
+def kfold_run(X, y_0, y_labels, y_1, k=5):
+
+    kfold = KFold(n_splits=k, shuffle=True, random_state=1)
+
+    micro_f1_list = []
+    macro_f1_list = []
+    for train, test in kfold.split(X, y_0):
+        X_train, y_train = X.iloc[train], y_0[train]
+        X_test, y_test = X.iloc[test], y_0[test]
+        model = evaluate_1(BaselineEstimatorMultipleClassifiers, X_train, y_train,X_test,y_test, y_labels)
+        export_results(model, "task1_", X_test, y_labels, y_test, y_name=y_0_name,conf=False)
+        micro_f1, macro_f1 = evaluate_0_pycharm.run("task1_y_test.csv", "task1_y_pred.csv")
+        micro_f1_list.append(micro_f1)
+        macro_f1_list.append(macro_f1)
+
+    print("Micro f1:" + str(np.mean(micro_f1_list)))
+    print("Macro f1:" + str(np.mean(macro_f1_list)))
+
+    mse_list = []
+    for train, test in kfold.split(X, y_1):
+        X_train, y_train = X.iloc[train], y_1[train]
+        X_test, y_test = X.iloc[test], y_1[test]
+        model = evaluate_2(BaselineEstimatorRegression, X_train, y_train,X_test,y_test)
+        export_results(model, "task2_", X_test, y_labels, y_test, y_name=y_1_name,parse_y=False)
+        mse = evaluate_1_pycharm.run("task2_y_test.csv", "task2_y_pred.csv")
+        mse_list.append(mse)
+
+    print("MSE:" + str(np.mean(mse_list)))
+
+
 if __name__ == '__main__':
-    np.random.seed(0)
+
     loader = Loader(path=X_PATH,pickled_path=X_PATH_PICKLED)
     loader.load()
     # loader.activate_preprocessing([clean_cols, hot_encoding_noga,
     #                                preprocessing_by_maya,
     #                                tomer_prep,create_times,mean_ids,
     #                                drop_dates])
-    loader.activate_preprocessing([clean_cols,hot_encoding_noga,create_times,
-                                   drop_dates])
+    loader.activate_preprocessing([clean_cols])
     loader.save_csv("pre_proc.csv")
     loader.pickle_data()
     # loader.load_pickled()
@@ -176,22 +212,6 @@ if __name__ == '__main__':
     y_1_name = y_1.columns[0]
     y_1 = y_1.squeeze().rename(y_1_name) # transform to Series
 
-
-    X_test, y_test, X_train, y_train, X_dev, y_dev = split_train_test_dev(X,
-                                                                          pd.DataFrame(y_0))
-    model = evaluate_1(BaselineEstimatorMultipleClassifiers,X_train, y_train,
-                  X_dev,
-             y_dev, y_labels)
-
-    export_results(model,"task1_",X_test,y_labels,y_test,y_name=y_0_name,
-                   conf=False)
-    #run_eval("task1_y_pred.csv","task1_y_test.csv")
-    X_test, y_test, X_train, y_train, X_dev, y_dev = split_train_test_dev(X,
-                                                                          y_1)
-    model = evaluate_2(BaselineEstimatorRegression, X_train, y_train,
-                       X_dev, y_dev)
-
-    export_results(model, "task2_", X_test, y_labels, y_test,y_name=y_1_name,
-                   parse_y=False)
-
+    #normal_run(X,y_0, y_1)
+    kfold_run(X, y_0, y_labels, y_1)
 

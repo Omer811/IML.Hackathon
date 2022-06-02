@@ -72,7 +72,7 @@ def split_train_test_dev(X,y):
                                                    test_size=0.7)
 
 
-    return X_test,y_test,X_train, y_train,X_dev,y_dev
+    return X_test,y_test.to_numpy(),X_train, y_train.to_numpy(),X_dev,y_dev.to_numpy()
 
 def get_unique_labels(y:pd.Series):
     unique = y.unique()
@@ -144,7 +144,7 @@ def evaluate_2(estimator,X_train: pd.DataFrame, y_train: pd.Series,
     X_train = transform_categorical(X_train)
     X_test = transform_categorical(X_test)
 
-    model = estimator(y_labels)
+    model = estimator()
     model.fit(X_train, y_train)
     print(model.loss(X_test, y_test))
     return model

@@ -34,9 +34,10 @@ def mean_ids(df:pd.DataFrame):
     return df
 
 def drop_dates(df:pd.DataFrame):
+    ids = df["id-hushed_internalpatientid"]
     dates = df.select_dtypes(exclude=[np.number]).columns
-
     df = df.drop(columns=dates)
+    df["id-hushed_internalpatientid"] = ids
     return df
 
 def evaluate_1(estimator,X_train: pd.DataFrame, y_train: pd.Series,
@@ -45,8 +46,8 @@ def evaluate_1(estimator,X_train: pd.DataFrame, y_train: pd.Series,
     X_train.to_csv("for_maya_she_doesnt_believe_in_computers.csv")
     X_test = transform_categorical(X_test)
 
-    # model = estimator(labels)
-    model = estimator()
+    model = estimator(labels)
+    # model = estimator()
     model.fit(X_train, y_train)
     return model
 
@@ -60,14 +61,14 @@ def transform_categorical(data:pd.DataFrame):
         return encoder.transform(data)
     return data
 def split_train_test_dev(X,y):
+    X = X.sample(frac=1)
     unique_idx = X["id-hushed_internalpatientid"].unique()
-    idx_split = np.arange(len(unique_idx))
-    idx_split = np.array_split(idx_split,2)
-    test_X = X[X["id-hushed_internalpatientid"] in idx_split[0]]
-    train_X = X[X["id-hushed_internalpatientid"] in idx_split[1]]
-    y_test = y.loc[test_X.index]
+    idx_split = np.array_split(unique_idx,2)
+    X_test = X[X["id-hushed_internalpatientid"].isin(idx_split[0])]
+    train_X = X[X["id-hushed_internalpatientid"].isin(idx_split[1])]
+    y_test = y.loc[X_test.index]
     y_train = y.loc[train_X.index]
-    X_train,X_dev, y_train, y_dev = train_test_split(train_X,test_X,
+    X_train, X_dev, y_train, y_dev = train_test_split(train_X,y_train,
                                                    test_size=0.7)
 
 
@@ -176,8 +177,9 @@ if __name__ == '__main__':
     y_1 = y_1.squeeze().rename(y_1_name) # transform to Series
 
 
-    X_test, y_test, X_train, y_train, X_dev, y_dev = split_train_test_dev(X, y_0)
-    model = evaluate_1(MultivariateReg,X_train, y_train,
+    X_test, y_test, X_train, y_train, X_dev, y_dev = split_train_test_dev(X,
+                                                                          pd.DataFrame(y_0))
+    model = evaluate_1(BaselineEstimatorMultipleClassifiers,X_train, y_train,
                   X_dev,
              y_dev, y_labels)
 
@@ -186,7 +188,7 @@ if __name__ == '__main__':
     #run_eval("task1_y_pred.csv","task1_y_test.csv")
     X_test, y_test, X_train, y_train, X_dev, y_dev = split_train_test_dev(X,
                                                                           y_1)
-    model = evaluate_2(BaselineEstimatorMultipleClassifiersADA, X_train, y_train,
+    model = evaluate_2(BaselineEstimatorRegression, X_train, y_train,
                        X_dev, y_dev)
 
     export_results(model, "task2_", X_test, y_labels, y_test,y_name=y_1_name,

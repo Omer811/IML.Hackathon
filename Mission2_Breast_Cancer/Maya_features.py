@@ -1,6 +1,14 @@
 import numpy as np
 import pandas as pd
 from data_loader import Loader
+import math
+
+
+def cleanup_duplicates(df):
+    #  remove duplicates fronm data
+
+
+
 
 
 def preprocessing_by_maya(df):
@@ -20,14 +28,49 @@ def preprocessing_by_maya(df):
          "L2 - Evidence of invasion of depp Lym.": 4, }, inplace=True)
 
     # I turned Null into not yet established, and created dummy variables
-    df['אבחנה-M -metastases mark (TNM)'].fillna('Not yet Established', inplace=True)
-    b = df['אבחנה-M -metastases mark (TNM)'].unique()
-    df = pd.concat([df, pd.get_dummies(df['אבחנה-M -metastases mark (TNM)'])], axis=1)
+    df['אבחנה-M -metastases mark (TNM)'].fillna('Not yet Established',
+                                                inplace=True)
+    df = pd.concat([df, pd.get_dummies(df['אבחנה-M -metastases mark (TNM)'])],
+                   axis=1)
     del df['אבחנה-M -metastases mark (TNM)']
-    a = 1
 
-    # deleting margin type as they are all marked exactly the same
+    # Margin type as dummy variables. Should we connect "ללא" u "נקיים"?
+    df = pd.concat([df, pd.get_dummies(df['אבחנה-Margin Type'])],
+                   axis=1)
     del df['אבחנה-Margin Type']
+
+    # Lymph nodes mark as dummies
+    df['אבחנה-N -lymph nodes mark (TNM)'].replace(
+        {'#NAME?': "", 'NX': 'Not yet Established'}, inplace=True)
+    df['אבחנה-N -lymph nodes mark (TNM)'].fillna('Not yet Established',
+                                                 inplace=True)
+    df = pd.concat([df, pd.get_dummies(df['אבחנה-N -lymph nodes mark (TNM)'])],
+                   axis=1)
+    del df['אבחנה-N -lymph nodes mark (TNM)']
+
+    df['אבחנה-Nodes exam'].replace({np.nan: 0, "": 0, 'nan': 0}, inplace=True)
+    df['אבחנה-Nodes exam'].fillna(0, inplace=True)
+    idx = df['אבחנה-Nodes exam'].apply(math.isnan)
+    df.loc[idx, 'אבחנה-Nodes exam'] = 0
+
+    # Replace missing values with 0
+    df['אבחנה-Positive nodes']
+    idx = df['אבחנה-Positive nodes'].apply(math.isnan)
+    df.loc[idx, 'אבחנה-Positive nodes'] = 0
+
+    # Replace missing values with unknowns and create dummies
+    df['אבחנה-Side'] = np.where(df['אבחנה-Side'].astype(str) == 'nan', 'side unknown',
+                                df['אבחנה-Side'])
+    df = pd.concat([df, pd.get_dummies(df['אבחנה-Side'])], axis=1)
+    del df['אבחנה-Side']
+
+    dict = {'Stage0': 0, 'Stage0a': 0, 'Stage0is': 0, 'Stage1': 1, 'Stage1a': 1.3,
+         'Stage1b': 1.5, 'Stage1c': 1.7, 'Stage2': 2, 'Stage2a': 2.3,
+         'Stage2b': 2.6, 'Stage3': 3, 'Stage3a': 3.2, 'Stage3b': 3.5,
+         'Stage3c': 3.8, 'Stage4': 4, 'LA': 3, 'nan':0, 'Not yet Established':0}
+    for bad,good in dict.items():
+        df['אבחנה-Stage'] = np.where(df['אבחנה-Stage'].astype(str) == bad, good, df['אבחנה-Stage'])
+
 
 
 loader = Loader(

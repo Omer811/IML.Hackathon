@@ -4,6 +4,9 @@ from feature_engine.encoding import CountFrequencyEncoder
 from sklearn.model_selection import train_test_split
 from baseline_estimator import BaselineEstimator
 from data_loader import Loader
+from sklearn import preprocessing
+import ast
+from functools import reduce
 
 X_PATH = "Mission2_Breast_Cancer/train.feats.csv"
 Y_PATH = "Mission2_Breast_Cancer/train.labels.0.csv"
@@ -25,6 +28,14 @@ def split_train_test_dev(X,y):
     X_train,X_dev, y_train, y_dev = train_test_split(X_temp,y_temp)
 
     return X_test,y_test,X_train, y_train,X_dev,y_dev
+
+def get_unique_labels(y:pd.Series):
+    unique = y.unique()
+    unique = [ast.literal_eval(val) for val in unique]
+    unique = list(reduce(lambda x,y:x+y,unique))
+    return list(set(unique))
+
+
 if __name__ == '__main__':
     loader = Loader(path=X_PATH)
     loader.load()
@@ -32,6 +43,11 @@ if __name__ == '__main__':
     loader = Loader(path=Y_PATH)
     loader.load()
     y = loader.get_data().loc[X.index]
+    y = y.squeeze()#transform to Series
+    lb = preprocessing.LabelBinarizer()
+    unique_labels = get_unique_labels(y)
+    lb . fit(unique_labels)
+    y = lb.transform(y)
 
     X_test, y_test, X_train, y_train, X_dev, y_dev = split_train_test_dev(X,y)
     preform_baseline(X_train,y_train,X_dev,y_dev)

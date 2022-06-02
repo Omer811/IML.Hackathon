@@ -10,12 +10,14 @@ def cleanup_duplicates(df):
 
 
 def hot_encoding_noga(df):
-
     # 1-hot-encoding for categorical features
-    cols = ['אבחנה-Surgery name1', 'אבחנה-Surgery name2', 'אבחנה-Surgery name3',
-            'אבחנה-T -Tumor mark (TNM)', 'surgery before or after-Actual activity']
+    cols = ['אבחנה-Surgery name1', 'אבחנה-Surgery name2',
+            'אבחנה-Surgery name3',
+            'אבחנה-T -Tumor mark (TNM)',
+            'surgery before or after-Actual activity']
     for col in cols:
         df = pd.concat([df, pd.get_dummies(df[col])], axis=1)
+        del df[col]
 
     # Change er and pr to -1,0,1
     dict = {'pos': 1, 'neg': -1, 'unknown': 0}
@@ -27,6 +29,7 @@ def hot_encoding_noga(df):
 
     return df
 
+
 def preprocessing_by_maya(df):
     # df.rename(columns={' Form Name': 'Form Name'}, inplace=True)
 
@@ -36,13 +39,23 @@ def preprocessing_by_maya(df):
     df = pd.concat([df, pd.get_dummies(df[" Form Name"])], axis=1)
     del df[' Form Name']
 
+    return df
 
     # Here we should consider to seperate LI into a seperate column, beacause it is not necasseriley lower than L1 and L2.
-    df['אבחנה-Lymphatic penetration'].replace(
-        {"Null": 0, "L0 - No Evidence of invasion": 1,
-         "LI - Evidence of invasion": 2,
-         "L1 - Evidence of invasion of superficial Lym.": 3,
-         "L2 - Evidence of invasion of depp Lym.": 4, }, inplace=True)
+
+    # df['אבחנה-Lymphatic penetration'].replace(
+    #     {"Null": 0, "L0 - No Evidence of invasion": 1,
+    #      "LI - Evidence of invasion": 2,
+    #      "L1 - Evidence of invasion of superficial Lym.": 3,
+    #      "L2 - Evidence of invasion of depp Lym.": 4, }, inplace=True)
+
+    dict = {"Null": 0, 'nan':0, "L0 - No Evidence of invasion": 1,
+            "LI - Evidence of invasion": 2,
+            "L1 - Evidence of invasion of superficial Lym.": 3,
+            "L2 - Evidence of invasion of depp Lym.": 4, }
+    for key, val in dict.items():
+        df['אבחנה-Lymphatic penetration'] = np.where(df['אבחנה-Lymphatic penetration'].astype(str) == key,
+                                     val, df['אבחנה-Lymphatic penetration'])
 
     # I turned Null into not yet established, and created dummy variables
     df['אבחנה-M -metastases mark (TNM)'].fillna('Not yet Established',
@@ -93,8 +106,10 @@ def preprocessing_by_maya(df):
                                      val, df['אבחנה-Stage'])
     a = 1
 
+    # turning diagnosis dates into time stamps
+    df['אבחנה-Diagnosis date'] = pd.to_datetime(df['אבחנה-Diagnosis date'],
+                                                errors='coerce')
     return df
-
 
 # loader = Loader(
 #     path="C:\\Users\\Maya\\Desktop\\School\\IML\\hakathon\\IML.Hackathon\\Mission2_Breast_Cancer\\train.feats.csv")

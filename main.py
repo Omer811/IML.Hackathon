@@ -2,7 +2,6 @@ import numpy as np
 import pandas as pd
 from feature_engine.encoding import CountFrequencyEncoder
 from sklearn.model_selection import train_test_split
-from baseline_estimator import BaselineEstimator
 from baseline_estimator_2 import BaselineEstimatorMultipleClassifiers,BaseEstimator
 from data_loader import Loader
 from sklearn import preprocessing
@@ -10,19 +9,12 @@ import ast
 from functools import reduce
 from sklearn.metrics import confusion_matrix
 import plotly.figure_factory as ff
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 from preprocessing_noga import clean_cols
 from Mission2_Breast_Cancer.Maya_features import preprocessing_by_maya, \
     hot_encoding_noga
 from feature_creation import create_times
-from baseline_estimator_task2 import BaselineEstimatorRegression
-from preprocessing_tomer import tomer_prep
-from multivariate_regression import MultivariateReg
-from evaluate_part_0_non_cmd import run_eval
-from baseline_estimator_2_adaboost import BaselineEstimatorMultipleClassifiersADA
-from xgboost_1 import XGB1
 from xgboost_2 import XGB2
+
 X_PATH = "Mission2_Breast_Cancer/train.feats.csv"
 X_PATH_PICKLED = "Mission2_Breast_Cancer/train.feats.csv.pickled"
 Y_PATH_0 = "Mission2_Breast_Cancer/train.labels.0.csv"
@@ -31,9 +23,9 @@ Y_PATH_1 = "Mission2_Breast_Cancer/train.labels.1.csv"
 def mean_ids(df:pd.DataFrame,y0,y1):
     df = pd.concat([df,y0,y1], axis=1)
     df = df.dropna()
-    # %%
+
     df = df.groupby('id-hushed_internalpatientid', as_index=False).mean()
-    # df.drop(["id-hushed_internalpatientid"], axis=1, inplace=True)
+
     y0 = df[df.columns[-12:-1]]
     y1 = df[df.columns[-1]]
     df= df.drop(columns=df.columns[-12:])
@@ -49,8 +41,6 @@ def drop_dates(df:pd.DataFrame):
 def evaluate_1(estimator,X_train: pd.DataFrame, y_train: pd.Series,
              X_test: pd.DataFrame, labels):
     X_train = transform_categorical(X_train)
-    #X_train.to_csv("for_maya_she_doesnt_believe_in_computers.csv")
-    # X_test = transform_categorical(X_test)
 
     model = estimator(labels)
     # model = estimator()
@@ -122,7 +112,6 @@ def show_conf_matrix(y_true,y_pred,class_labels):
 def export_results(model:BaseEstimator,path, X_test,class_labels,
                    y_test:pd.Series,y_name,
                    conf=False,parse_y = True):
-    # X_test = transform_categorical(X_test)
     pred = model.predict(X_test)
     t_pred = pred
     if parse_y:
@@ -187,28 +176,6 @@ def submit():
                                   preprocessing_by_maya,create_times,
                                      drop_dates])
     X_test = loader.get_data()
-    diff = set(X.columns).union(set(X_test.columns)) - set(
-        X.columns).intersection(set(X_test.columns))
-    # X=X.drop(columns=diff)
-    # X_test = X_test.drop(columns=diff)
-    # for val in diff:
-    #     if val in X.columns:
-    #         # del X[val]
-    #         X = X.drop(columns=[val])
-    #     if val in X_test.columns:
-    #         X_test = X_test.drop(columns=[val])
-    #         # del X_test[val]
-    # temp = X[diff]
-    # X_test
-    # del X_test[set(X.columns).union(set(X_test.columns)) - set(
-    #     X.columns).intersection(set(X.columns))]
-    # Get missing columns in the training test
-    # missing_cols = set(X.columns) - set(X_test.columns)
-    # # Add a missing column in test set with default value equal to 0
-    # for c in missing_cols:
-    #     X_test[c] = 0
-    # # Ensure the order of column in the test set is in the same order than in train set
-    # X_test = X_test[X.columns]
     del X["id-hushed_internalpatientid"]
     del X_test["id-hushed_internalpatientid"]
     X, X_test = X.align(X_test, join='outer', axis=1, fill_value=0)
@@ -229,15 +196,13 @@ if __name__ == '__main__':
     submit()
     exit()
     loader = Loader(path=X_PATH,pickled_path=X_PATH_PICKLED)
-    # loader.load()
-    # loader.activate_preprocessing([clean_cols, hot_encoding_noga,
-    #                                preprocessing_by_maya,create_times,
-    #                                drop_dates])
-    # # loader.activate_preprocessing([clean_cols,hot_encoding_noga,create_times,
-    # #                                drop_dates])
-    # # loader.save_csv("pre_proc.csv")
+    loader.load()
+    loader.activate_preprocessing([clean_cols, hot_encoding_noga,
+                                   preprocessing_by_maya,create_times,
+                                   drop_dates])
+    # loader.save_csv("pre_proc.csv")
     # loader.pickle_data()
-    loader.load_pickled()
+    # loader.load_pickled()
     X = loader.get_data()
     loader = Loader(path=Y_PATH_0)
     loader.load()
@@ -263,7 +228,6 @@ if __name__ == '__main__':
 
     export_results(model,"task1_",X_test,y_labels,y_test,y_name=y_0_name,
                    conf=False)
-    #run_eval("task1_y_pred.csv","task1_y_test.csv")
     X_test, y_test, X_train, y_train, X_dev, y_dev = split_train_test_dev(X,
                                                                           y_1)
     model = evaluate_2(XGB2, X_train, y_train,
